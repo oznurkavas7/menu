@@ -36,3 +36,10 @@
     transform: rotate(360deg);
   }
 }
+.appBarColor {
+  background-color: #B7AC44 !important;
+}
+
+body {
+  background-image: url("wooden-board-empty-table-top-blurred-background.jpg");
+}
