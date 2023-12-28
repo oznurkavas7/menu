@@ -5,7 +5,8 @@ const initialState = {
     menuList: localStorage.getItem('menuList') ? JSON.parse(localStorage.getItem('menuList')) : [],
     productDetail: null,
     productUpdateStatus: false,
-    getOneProduct: false
+    categoryDetail: null,
+    categoryUpdateStatus: false
 }
 
 export const loginOperation = createAsyncThunk(
@@ -48,12 +49,46 @@ export const updateProductOperation = createAsyncThunk(
     }
 );
 
+export const updateCategoryOperation = createAsyncThunk(
+    'gets/updateCategoryOperation',
+    async ({ id,topCategoryId, name, desc, image }, { getState }) => {
+        const state = getState();
+        const res = await fetch('https://192.168.1.105/api/Categories/update', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.menu.token.token}` },
+            body: JSON.stringify({
+                id: id,
+                topCategoryId: topCategoryId,
+                name: name,
+                description: desc,
+                image: image
+            })
+        }).then(
+            (data) => data.json()
+        )
+        return res
+    }
+);
+
 export const getProduct = createAsyncThunk(
     'gets/getProduct',
-    async ({ categoryId }, { getState }) => {
-        debugger
+    async ({ productId }, { getState }) => {
         const state = getState();
-        const res = await fetch(`https://192.168.1.105/api/Products/getall?categoryId=${categoryId}`, {
+        const res = await fetch(`https://192.168.1.105/api/Products/get?productId=${productId}`, {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.menu.token.token}` },
+        }).then(
+            (data) => data.json()
+        )
+        return res
+    }
+);
+
+export const getCategory = createAsyncThunk(
+    'gets/getCategory',
+    async ({ categoryId }, { getState }) => {
+        const state = getState();
+        const res = await fetch(`https://192.168.1.105/api/Categories/get?categoryId=${categoryId}`, {
             method: 'GET',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${state.menu.token.token}` },
         }).then(
@@ -80,12 +115,66 @@ export const MenuSlice = createSlice({
     name: 'menu',
     initialState,
     reducers: {
-        openProductEdit: (state, action) => {
-            state.productDetail = action.payload
-        },
         closeProductEdit: (state) => {
             state.productDetail = null
         },
+        closeCategoryEdit: (state) => {
+            state.categoryDetail = null
+        },
+        changeProductDetail: (state, action) => {
+            state.productDetail = action.payload.payload.data
+          
+            const updatedMenuList = {
+              ...state.menuList,
+              data: {
+                ...state.menuList.data,
+                root: state.menuList.data.root.map(category => {
+                  return {
+                    ...category,
+                    subCategories: category.subCategories.map(subCategory => {
+                      return {
+                        ...subCategory,
+                        products: subCategory.products.map(item => {
+                          if (item.id === action.payload.payload.data.id) {
+                            return action.payload.payload.data;
+                          }
+                          return item;
+                        }),
+                      };
+                    }),
+                  };
+                }),
+              },
+            };
+          
+            state.menuList = updatedMenuList
+          },
+          changeCategoryDetail: (state, action) => {
+            state.categoryDetail = action.payload.payload.data
+
+            const updatedMenuList = {
+                ...state.menuList,
+                data: {
+                  ...state.menuList.data,
+                  root: state.menuList.data.root.map(category => {
+                    return {
+                      ...category,
+                      subCategories: category.subCategories.map(subCategory => {
+                        if (subCategory.id === action.payload.payload.data.id) {
+                          return {
+                            ...subCategory,
+                            ...action.payload.payload.data,
+                          };
+                        }
+                        return subCategory;
+                      }),
+                    };
+                  }),
+                },
+              };
+              
+              state.menuList = updatedMenuList;
+          }
     },
     extraReducers: (builder) => {
         builder
@@ -100,13 +189,20 @@ export const MenuSlice = createSlice({
             .addCase(updateProductOperation.fulfilled, (state, action) => {
                 state.productUpdateStatus = true;
             })
-            .addCase(getProduct.fulfilled, (state, action) => {
-                state.getOneProduct = true;
+            .addCase(updateCategoryOperation.fulfilled, (state, action) => {
+                state.categoryUpdateStatus = true;
             })
+            .addCase(getProduct.fulfilled, (state, action) => {
+                state.productDetail = action.payload.data
+            })
+            .addCase(getCategory.fulfilled, (state, action) => {
+                state.categoryDetail = action.payload.data
+            })
+          
     }
 });
 
 // Action creators are generated for each case reducer function
-export const { openProductEdit, closeProductEdit } = MenuSlice.actions
+export const { closeCategoryEdit, closeProductEdit, changeProductDetail, changeCategoryDetail } = MenuSlice.actions
 
 export default MenuSlice.reducer
