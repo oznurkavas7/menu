@@ -8,13 +8,15 @@ import { getMenuList } from '../redux/MenuSlice'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import IconButton from '@mui/material/IconButton';
 import EditIcon from '@mui/icons-material/Edit';
+import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { getProduct, getCategory } from '../redux/MenuSlice'
+import { getProduct, getCategory, openNewProductWind, deleteProduct, removeProduct } from '../redux/MenuSlice'
 import ProductEdit from "./ProductEdit";
 import SubCategoryEdit from "./SubCategoryEdit";
+import NewProduct from "./NewProduct";
 
 const ProductCard = ({ product }) => {
-    const dispatch = useDispatch(); 
+    const dispatch = useDispatch();
 
     return (
         <Grid container justifyContent="center" spacing={2}>
@@ -38,11 +40,20 @@ const ProductCard = ({ product }) => {
                         </CardContent>
                         <div style={{ justifyContent: 'flex-end', display: 'flex' }}>
                             <IconButton onClick={() => {
-                                dispatch(getProduct({productId: subProduct.id}))
-                            }}> 
+                                dispatch(getProduct({ productId: subProduct.id }))
+                            }}>
                                 <EditIcon />
                             </IconButton>
-                            <IconButton>
+                            <IconButton onClick={() => {
+                                dispatch(deleteProduct({
+                                    id: subProduct.id,
+                                    categoryId: subProduct.categoryId
+                                })).then((result) => {
+                                    if (result.payload) {
+                                        dispatch(removeProduct(subProduct))
+                                    }
+                                });
+                            }}>
                                 <DeleteIcon />
                             </IconButton>
                         </div>
@@ -55,7 +66,7 @@ const ProductCard = ({ product }) => {
 }
 
 const CategoryCard = ({ category }) => {
-    const dispatch = useDispatch(); 
+    const dispatch = useDispatch();
 
     return (
         <AccordionDetails>
@@ -74,9 +85,14 @@ const CategoryCard = ({ category }) => {
                                 </AccordionSummary>
                                 <Box>
                                     <IconButton onClick={() => {
-                                dispatch(getCategory({categoryId: subCategory.id}))
-                            }}>
+                                        dispatch(getCategory({ categoryId: subCategory.id }))
+                                    }}>
                                         <EditIcon />
+                                    </IconButton>
+                                    <IconButton onClick={() => {
+                                        dispatch(openNewProductWind(subCategory.id))
+                                    }}>
+                                        <AddIcon />
                                     </IconButton>
                                 </Box>
                             </Box>
@@ -144,7 +160,7 @@ const Menu = () => {
 
             <ProductEdit></ProductEdit>
             <SubCategoryEdit></SubCategoryEdit>
-
+            <NewProduct></NewProduct>
         </Container>
     )
 }
