@@ -1,9 +1,8 @@
-import React, { useEffect } from "react";
-import IconButton from '@mui/material/IconButton';
+import React from "react";
 import SaveIcon from '@mui/icons-material/Save';
-import { closeCategoryEdit, updateCategoryOperation, getCategory, changeCategoryDetail } from '../redux/MenuSlice'
+import { closeCategoryEdit, updateCategoryOperation, getCategory, getMenuList } from '../redux/MenuSlice'
 import {
-    TextField, Typography, Box, FormControl, Stack, Modal, Fade
+    TextField, Typography, Box, FormControl, Stack, Modal, Fade, Button
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -61,24 +60,26 @@ const SubCategoryEdit = () => {
                                     label="Açıklama" variant="outlined" />
                             </Stack>
                             <Stack flexDirection='row' justifyContent={'flex-end'} gap={1.5} mt={1}>
-                                <IconButton onClick={() => {
+                            <Button variant="outlined" onClick={() => {
                                     dispatch(updateCategoryOperation({
-                                        id: categoryDetail.id,
-                                        topCategoryId: categoryDetail.topCategoryId,
-                                        name: inputCatName ? inputCatName : categoryDetail.name,
-                                        desc: inputCatDesc ? inputCatDesc : categoryDetail.description,
-                                        image: categoryDetail.image,
+                                        body: JSON.stringify({
+                                            id: categoryDetail.id,
+                                            topCategoryId: categoryDetail.topCategoryId,
+                                            name: inputCatName ? inputCatName : categoryDetail.name,
+                                            description: inputCatDesc ? inputCatDesc : categoryDetail.description,
+                                            image: categoryDetail.image,
+                                        })
                                     })).then((result) => {
                                         if (result.payload) {
                                             dispatch(getCategory({categoryId: categoryDetail.id })).then((result) => {
-                                                dispatch(changeCategoryDetail(result))
+                                                dispatch(getMenuList())
                                                 dispatch(closeCategoryEdit(result))
                                             });
                                         }
                                     });
-                                }}>
-                                    <SaveIcon />
-                                </IconButton>
+                                }} style={{ border: '2px solid #B6E2D3', color: '#167D7F' }} startIcon={<SaveIcon />}>
+                                    Kaydet
+                                </Button>
                             </Stack>
                         </FormControl>
                     </Fade>

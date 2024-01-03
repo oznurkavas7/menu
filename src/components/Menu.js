@@ -4,16 +4,20 @@ import {
     Typography, Paper, CardContent, Grid, Container
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux'
-import { getMenuList } from '../redux/MenuSlice'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import IconButton from '@mui/material/IconButton';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { getProduct, getCategory, openNewProductWind, deleteProduct, removeProduct } from '../redux/MenuSlice'
+import {
+    getProduct, getCategory, openNewProductWind, openNewSubCatWind, deleteProduct,
+    deleteSubCat, getMenuList, getMainCategory
+} from '../redux/MenuSlice'
 import ProductEdit from "./ProductEdit";
 import SubCategoryEdit from "./SubCategoryEdit";
 import NewProduct from "./NewProduct";
+import MainCategoryEdit from "./MainCategoryEdit";
+import NewSubCategory from "./NewSubCategory";
 
 const ProductCard = ({ product }) => {
     const dispatch = useDispatch();
@@ -23,34 +27,46 @@ const ProductCard = ({ product }) => {
             {product.products?.map((subProduct) => (
                 <Grid key={subProduct.id} item>
                     <Paper elevation={10} sx={{
-                        maxWidth: 345, width: 300, height: "100%",
-                        display: 'flex', flexDirection: 'column', justifyContent: 'space-between'
+                        maxWidth: 345, minWidth: 345, height: "100%", display: 'flex', flexDirection: 'column',
                     }}>
-                        <img src={subProduct.image} alt='' style={{ objectFit: "contain", maxHeight: "100px", width: "100%" }}></img>
-                        <CardContent>
-                            <Typography gutterBottom variant="h6" component="div">
-                                {subProduct.name}
-                            </Typography>
-                            <Typography gutterBottom variant="h7" component="div" style={{ color: "#4444FF", marginTop: '10px', fontWeight: "bold" }}>
-                                {subProduct.description}
-                            </Typography>
-                            <Typography gutterBottom variant="h7" component="div" style={{ marginTop: '10px', fontWeight: "bold" }}>
-                                {subProduct.price} ₺
-                            </Typography>
-                        </CardContent>
-                        <div style={{ justifyContent: 'flex-end', display: 'flex' }}>
-                            <IconButton onClick={() => {
-                                dispatch(getProduct({ productId: subProduct.id }))
-                            }}>
+                        <Grid container spacing={2}>
+                            <Grid item xs>
+                                <CardContent>
+                                    <img src={subProduct?.image == null ?
+                                        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRIG5y-eVT4ylcUtAGef3dpU3faonRbcNJ3Ag&usqp=CAU" : subProduct?.image}
+                                        alt='' style={{
+                                            justifyContent: 'center', display: 'flex',
+                                            objectFit: "cover", height: "150px", width: "100%"
+                                        }}></img>
+                                </CardContent>
+                            </Grid>
+                            <Grid item xs={7}>
+                                <CardContent>
+                                    <Typography gutterBottom variant="h6" component="div">
+                                        {subProduct.name}
+                                    </Typography>
+                                    <Typography gutterBottom variant="h7" component="div" style={{ color: "#29A0B1", marginTop: '10px', fontWeight: "bold" }}>
+                                        {subProduct.description}
+                                    </Typography>
+                                    <Typography gutterBottom variant="h7" component="div" style={{ marginTop: '10px', fontWeight: "bold" }}>
+                                        {subProduct.price} ₺
+                                    </Typography>
+                                </CardContent>
+                            </Grid>
+                        </Grid>
+                        <div style={{ marginLeft: 'auto', marginTop: 'auto' }}>
+                            <IconButton onClick={() => dispatch(getProduct({ productId: subProduct.id }))}>
                                 <EditIcon />
                             </IconButton>
                             <IconButton onClick={() => {
                                 dispatch(deleteProduct({
-                                    id: subProduct.id,
-                                    categoryId: subProduct.categoryId
+                                    body: JSON.stringify({
+                                        id: subProduct.id,
+                                        categoryId: subProduct.categoryId
+                                    })
                                 })).then((result) => {
                                     if (result.payload) {
-                                        dispatch(removeProduct(subProduct))
+                                        dispatch(getMenuList())
                                     }
                                 });
                             }}>
@@ -61,7 +77,6 @@ const ProductCard = ({ product }) => {
                 </Grid>
             ))}
         </Grid>
-
     )
 }
 
@@ -74,16 +89,19 @@ const CategoryCard = ({ category }) => {
                 <div>
                     {category.subCategories.map(subCategory => (
                         <Accordion key={subCategory.id}>
-                            <Box sx={{ display: "flex", backgroundColor: "#000C66", justifyContent: "flex-end" }}>
+                            <Box sx={{ display: "flex", backgroundColor: "#D8A7B1", justifyContent: "flex-end", marginTop: '10px' }}>
                                 <AccordionSummary
                                     expandIcon={<ExpandMoreIcon />}
                                     aria-controls="panel1a-content"
                                     id="panel1a-header"
-                                    style={{ backgroundColor: "#000C66", color: "#fff", width: "1000px" }}
+                                    style={{ backgroundColor: "#D8A7B1", color: "#fff", width: "1000px" }}
                                 >
-                                    <Typography>{subCategory.name}</Typography>
+                                    <div>
+                                        <Typography>{subCategory.name}</Typography>
+                                        <Typography variant="body2" color="textSecondary">{subCategory.description}</Typography>
+                                    </div>
                                 </AccordionSummary>
-                                <Box>
+                                <div style={{ justifyContent: 'flex-end', display: 'flex' }}>
                                     <IconButton onClick={() => {
                                         dispatch(getCategory({ categoryId: subCategory.id }))
                                     }}>
@@ -94,7 +112,20 @@ const CategoryCard = ({ category }) => {
                                     }}>
                                         <AddIcon />
                                     </IconButton>
-                                </Box>
+                                    <IconButton onClick={() => {
+                                        dispatch(deleteSubCat({
+                                            body: JSON.stringify({
+                                                id: subCategory.id
+                                            })
+                                        })).then((result) => {
+                                            if (result.payload) {
+                                                dispatch(getMenuList())
+                                            }
+                                        });
+                                    }}>
+                                        <DeleteIcon />
+                                    </IconButton>
+                                </div>
                             </Box>
                             <AccordionDetails>
                                 <div>
@@ -114,25 +145,38 @@ const CategoryCard = ({ category }) => {
 };
 
 const CategoryList = ({ categories }) => {
+    const dispatch = useDispatch();
+
     return (
         <div>
             <Box sx={{ flexGrow: 1 }}>
                 {categories.map((item, index) => (
                     <Accordion key={index}>
-                        <Box sx={{ display: "flex", backgroundColor: "blue", justifyContent: "flex-end" }}>
+                        <Box sx={{ display: "flex", backgroundColor: "#EF7C8E", justifyContent: "flex-end", marginTop: '10px' }}>
                             <AccordionSummary
                                 expandIcon={<ExpandMoreIcon />}
                                 aria-controls="panel1a-content"
                                 id="panel1a-header"
-                                style={{ backgroundColor: "blue", color: "#fff", width: "600px" }}
+                                style={{ backgroundColor: "#EF7C8E", color: "#fff", width: "600px" }}
                             >
-                                <Typography>{item.name}</Typography>
+                                <div>
+                                    <Typography>{item.name}</Typography>
+                                    <Typography variant="body2" color="textSecondary">{item.description}</Typography>
+                                </div>
                             </AccordionSummary>
-                            <Box>
-                                <IconButton>
+                            <div style={{ justifyContent: 'flex-end', display: 'flex' }}>
+                                <IconButton onClick={() => {
+                                    dispatch(getMainCategory({ mainCategoryId: item.id }))
+                                }}>
                                     <EditIcon />
                                 </IconButton>
-                            </Box>
+                                <IconButton onClick={() => {
+                                    dispatch(openNewSubCatWind(item.id))
+                                }}>
+                                    <AddIcon />
+                                </IconButton>
+                            </div>
+
                         </Box>
                         <CategoryCard key={item.id} category={item} />
 
@@ -143,8 +187,6 @@ const CategoryList = ({ categories }) => {
         </div>
     );
 };
-
-
 
 const Menu = () => {
     const { menuList } = useSelector(state => state.menu);
@@ -161,6 +203,8 @@ const Menu = () => {
             <ProductEdit></ProductEdit>
             <SubCategoryEdit></SubCategoryEdit>
             <NewProduct></NewProduct>
+            <MainCategoryEdit></MainCategoryEdit>
+            <NewSubCategory></NewSubCategory>
         </Container>
     )
 }

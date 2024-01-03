@@ -1,5 +1,5 @@
 import React from "react";
-import { AppBar, Toolbar, Box, Button } from '@mui/material';
+import { Toolbar, Box } from '@mui/material';
 import CssBaseline from '@mui/material/CssBaseline';
 
 const Header = () => {

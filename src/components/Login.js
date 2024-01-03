@@ -1,6 +1,6 @@
 import React from "react";
 import {
-    TextField, Container, Box, Paper, Typography
+    TextField, Box, Paper, Typography
 } from '@mui/material';
 import { useDispatch } from 'react-redux'
 import { loginOperation } from '../redux/MenuSlice'
@@ -16,21 +16,25 @@ const Login = () => {
     const navigate = useNavigate();
 
     return (
-        <Box sx={{ flexGrow: 1, display: 'flex', 
-        justifyContent: 'center', 
-        flexFlow: "column",
-        alignItems: "center",
-        position: "absolute",
-        right: "0",
-        left: "0",
-        top: "0",
-        bottom: "0" }}>
+        <Box sx={{
+            flexGrow: 1, display: 'flex',
+            justifyContent: 'center',
+            flexFlow: "column",
+            alignItems: "center",
+            position: "absolute",
+            right: "0",
+            left: "0",
+            top: "0",
+            bottom: "0"
+        }}>
             <div>
-                <Paper elevation={10} sx={{ margin: "20px", padding: "16px", bgcolor: "#E6D7D5", maxWidth: "300px", height:"300px"}}>
+                <Paper elevation={10} sx={{
+                    margin: "20px", padding: "16px", bgcolor: "#FAE8E0",
+                    maxWidth: "300px", height: "270px"
+                }}>
                     <Typography style={{
-                        fontFamily: 'Open Sans',
                         display: 'flex',
-                        justifyContent: 'center', color: "#43B14B", fontWeight: "bold"
+                        justifyContent: 'center', color: "#29A0B1", fontWeight: "bold"
                     }} variant="h6" gutterBottom>
                         Login
                     </Typography>
@@ -59,9 +63,7 @@ const Login = () => {
                         />
                     </div>
                     <div style={{ justifyContent: 'center', display: 'flex', marginTop: '20px' }}>
-                        <IconButton disabled={inputUserName === "" || inputPassword === ""} aria-label="Add" style={{
-                            background: "#43B14B",
-                        }} onClick={() => {
+                        <IconButton disabled={inputUserName === "" || inputPassword === ""} aria-label="Add" style={{ border: '2px solid #B6E2D3', color: '#167D7F' }} onClick={() => {
                             dispatch(loginOperation({ name: inputUserName, pass: inputPassword })).then((result) => {
                                 navigate(result.error ? "/login" : "/menu");
                                 setTokenStat(result.error ? true : false);
@@ -70,11 +72,18 @@ const Login = () => {
                             <LoginIcon />
                         </IconButton>
                     </div>
-                    <div style={{ color: "#DF362D", fontFamily: 'Open Sans',
-                    fontWeight: "bold", justifyContent: 'center', 
-                    display: tokenStat ? 'flex' : 'none', marginTop: '20px' }}>
-                        The login information is incorrect. Please check!
-                    </div>
+                    <Paper sx={{
+                        display: tokenStat ? 'flex' : 'none',
+                        margin: "20px", padding: "10px", bgcolor: "#FAE8E0"
+                    }}>
+                        <div style={{
+                            color: "#DF362D", fontWeight: "bold", justifyContent: 'center',
+                            display: tokenStat ? 'flex' : 'none'
+                        }}>
+                            The login information is incorrect. Please check!
+                        </div>
+                    </Paper>
+
                 </Paper>
             </div>
         </Box>

@@ -1,9 +1,8 @@
 import React from "react";
-import IconButton from '@mui/material/IconButton';
 import SaveIcon from '@mui/icons-material/Save';
-import { closeNewProduct, newProductOperation, getProduct, changeProductDetail } from '../redux/MenuSlice'
+import { closeNewProduct, newProductOperation, getProduct, getMenuList } from '../redux/MenuSlice'
 import {
-    TextField, Typography, Box, FormControl, Stack, Modal, Fade
+    TextField, Typography, Box, FormControl, Stack, Modal, Fade, Button
 } from '@mui/material';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -12,7 +11,7 @@ const NewProduct = () => {
     const [newDesc, setNewDesc] = React.useState("");
     const [newtPrice, setNewPrice] = React.useState("");
 
-    const { newProductCatId} = useSelector(state => state.menu);
+    const { newProductCatId } = useSelector(state => state.menu);
 
     const dispatch = useDispatch()
 
@@ -28,13 +27,29 @@ const NewProduct = () => {
         p: 4,
     };
 
+    const [file, setFile] = React.useState(null);
+    const [changeFile, setChangeFile] = React.useState(false);
+
+    function handleChange(e) {
+        let reader = new FileReader();
+        reader.onload = function (e) {
+            setFile(e.target.result);
+        };
+        reader.readAsDataURL(e.target.files[0]);
+        setChangeFile(true);
+    }
+
     return (
         <div>
             <Modal
                 aria-labelledby="modal-modal-title"
                 aria-describedby="modal-modal-description"
                 open={newProductCatId !== null}
-                onClose={() => dispatch(closeNewProduct())}
+                onClose={() => {
+                    dispatch(closeNewProduct());
+                    setFile(null);
+                    setChangeFile(false)
+                }}
             >
                 <Box sx={style}>
                     <Fade in={newProductCatId !== null}>
@@ -42,6 +57,12 @@ const NewProduct = () => {
                             <Typography sx={{ fontSize: 16, fontWeight: 'bold' }} color="text.secondary" gutterBottom>
                                 Yeni Ürün
                             </Typography>
+                            <div className="App">
+                                <img src={!changeFile ?
+                                    "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRIG5y-eVT4ylcUtAGef3dpU3faonRbcNJ3Ag&usqp=CAU" :
+                                    file} alt='' style={{ objectFit: "contain", maxHeight: "100px", width: "100%" }} />
+                                <input type="file" onChange={handleChange} />
+                            </div>
                             <Stack flexDirection='column' gap={1.5} mt={1}>
                                 <TextField
                                     onInput={(e) => setNewName(e.target.value)}
@@ -58,33 +79,45 @@ const NewProduct = () => {
                                     name={"Açıklama"}
                                     key={"Açıklama"}
                                     label="Açıklama" variant="outlined" />
-                                <TextField style={{ width: "100px" }}
-                                    onInput={(e) => setNewPrice(e.target.value)}
-                                    onChange={(e) => setNewPrice(e.target.value)}
-                                    name={"Fiyat"}
-                                    key={"Fiyat"}
-                                    inputProps={{ type: 'number' }} id="outlined-basic" label="Fiyat" variant="outlined" />
+
+                            </Stack>
+                            <Stack flexDirection='column' gap={1.5} mt={1}>
+                                <div style={{ display: 'flex', alignItems: 'center' }}>
+                                    <TextField style={{ width: "100px", marginRight: "5px" }}
+                                        onInput={(e) => setNewPrice(e.target.value)}
+                                        onChange={(e) => setNewPrice(e.target.value)}
+                                        name={"Fiyat"}
+                                        key={"Fiyat"}
+                                        inputProps={{ type: 'number' }} id="outlined-basic" label="Fiyat" variant="outlined" />
+
+                                    <div>₺</div>
+                                </div>
                             </Stack>
                             <Stack flexDirection='row' justifyContent={'flex-end'} gap={1.5} mt={1}>
-                                <IconButton onClick={() => {
+                            <Button variant="outlined" onClick={() => {
                                     dispatch(newProductOperation({
-                                        name: newName ? newName : null,
-                                        desc: newDesc ? newDesc : null,
-                                        categoryId: newProductCatId,
-                                        price: newtPrice ? newtPrice : null,
-                                        image: null,
-                                        currency: 0
+                                        body: JSON.stringify({
+                                            name: newName ? newName : null,
+                                            description: newDesc ? newDesc : null,
+                                            categoryId: newProductCatId,
+                                            price: newtPrice ? newtPrice : null,
+                                            image: file ? file : null,
+                                            currency: 0
+                                        })
+
                                     })).then((result) => {
                                         if (result.payload) {
-                                            dispatch(getProduct({productId: result.payload.data.id })).then((result) => {
-                                                dispatch(changeProductDetail(result))
+                                            dispatch(getProduct({ productId: result.payload.data.id })).then((result) => {
+                                                dispatch(getMenuList())
                                                 dispatch(closeNewProduct())
+                                                setFile(null);
+                                                setChangeFile(false);
                                             });
                                         }
                                     });
-                                }}>
-                                    <SaveIcon />
-                                </IconButton>
+                                }}  style={{ border: '2px solid #B6E2D3', color: '#167D7F' }} startIcon={<SaveIcon />}>
+                                    Kaydet
+                                </Button>
                             </Stack>
                         </FormControl>
                     </Fade>
